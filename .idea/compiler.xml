@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="apigateway" />
+        <module name="discoveryserver" />
+        <module name="Authservice" />
+      </profile>
+      <profile name="Annotation profile for eligibilitydetermination" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="eligibilitydetermination" />
+        <module name="benifitIssuance" />
+        <module name="applicationregistration" />
+        <module name="datacollection" />
+        <module name="correspondance" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Authservice" options="-parameters" />
+      <module name="apigateway" options="-parameters" />
+      <module name="applicationregistration" options="-parameters" />
+      <module name="benifitIssuance" options="-parameters" />
+      <module name="correspondance" options="-parameters" />
+      <module name="datacollection" options="-parameters" />
+      <module name="discoveryserver" options="-parameters" />
+      <module name="eligibilitydetermination" options="-parameters" />
+    </option>
+  </component>
+</project>
