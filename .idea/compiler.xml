@@ -8,9 +8,10 @@
         <outputRelativeToContentRoot value="true" />
         <module name="apigateway" />
         <module name="discoveryserver" />
+        <module name="configserver" />
         <module name="Authservice" />
       </profile>
-      <profile name="Annotation profile for eligibilitydetermination" enabled="true">
+      <profile name="Annotation profile for correspondance" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -20,8 +21,8 @@
         <module name="eligibilitydetermination" />
         <module name="benifitIssuance" />
         <module name="applicationregistration" />
-        <module name="datacollection" />
         <module name="correspondance" />
+        <module name="datacollection" />
       </profile>
     </annotationProcessing>
   </component>
@@ -31,6 +32,7 @@
       <module name="apigateway" options="-parameters" />
       <module name="applicationregistration" options="-parameters" />
       <module name="benifitIssuance" options="-parameters" />
+      <module name="configserver" options="-parameters" />
       <module name="correspondance" options="-parameters" />
       <module name="datacollection" options="-parameters" />
       <module name="discoveryserver" options="-parameters" />

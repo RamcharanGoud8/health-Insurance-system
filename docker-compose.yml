@@ -6,7 +6,7 @@ services:
     image: mysql:8
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: Ramcharan8@
       MYSQL_DATABASE: his_project
     ports:
       - "3307:3306"
@@ -17,6 +17,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - his-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - his-network
 
   discovery-server:
     build: ./discoveryserver
@@ -27,6 +37,32 @@ services:
       mysql:
         condition: service_healthy
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - his-network
+
+  config-server:
+    build: ./configserver
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - his-network
 
   api-gateway:
     build: ./apigateway
@@ -34,10 +70,18 @@ services:
     ports:
       - "8765:8765"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - his-network
 
   auth-service:
     build: ./Authservice
@@ -45,13 +89,18 @@ services:
     ports:
       - "8086:8086"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/his_project
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - his-network
 
   application-registration:
     build: ./applicationregistration
@@ -59,13 +108,18 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/his_project
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - his-network
 
   data-collection:
     build: ./datacollection
@@ -73,13 +127,18 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/his_project
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - his-network
 
   eligibility-determination:
     build: ./eligibilitydetermination
@@ -87,13 +146,18 @@ services:
     ports:
       - "8084:8084"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/his_project
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - his-network
 
   benefit-issuance:
     build: ./benifitIssuance
@@ -101,13 +165,18 @@ services:
     ports:
       - "9096:9096"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/his_project
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    networks:
+      - his-network
 
   correspondence:
     build: ./correspondance
@@ -115,13 +184,24 @@ services:
     ports:
       - "9095:9095"
     depends_on:
-      - discovery-server
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
     restart: always
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/his_project
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    volumes:
+      - C:/HIS_NOTICES:/HIS_NOTICES
+    networks:
+      - his-network
+
+networks:
+  his-network:
+    driver: bridge
 
 volumes:
   mysql-data:

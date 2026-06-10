@@ -1,0 +1,57 @@
+server:
+  port: 8765
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/auth/**
+            - id: application-registration
+              uri: lb://APPLICATION-REGISTRATION-SERVICE
+              predicates:
+                - Path=/applications/**, /get/**, /getAll/**, /update/**, /delete/**
+            - id: data-collection
+              uri: lb://DATA-COLLECTION-SERVICE
+              predicates:
+                - Path=/api/data-collection/**
+            - id: eligibility-determination
+              uri: lb://ELIGIBILITY-DETERMINATION-SERVICE
+              predicates:
+                - Path=/api/eligibility/**
+            - id: benefit-issuance
+              uri: lb://BENEFIT-ISSUANCE-SERVICE
+              predicates:
+                - Path=/benefits/**
+            - id: correspondence
+              uri: lb://CORRESPONDENCE-SERVICE
+              predicates:
+                - Path=/correspondence/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{traceId:-},%X{spanId:-}]"
+
+jwt:
+  secret: HISProjectSecretKeyForJWTTokenGenerationAndValidation2024

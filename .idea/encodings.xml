@@ -5,6 +5,7 @@
     <file url="file://$PROJECT_DIR$/apigateway/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/applicationregistration/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/benifitIssuance/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/configserver/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/correspondance/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/datacollection/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/discoveryserver/src/main/java" charset="UTF-8" />

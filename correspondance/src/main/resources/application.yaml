@@ -1,22 +1,5 @@
-server:
-  port: 9095
-
 spring:
   application:
-    name: CORRESPONDENCE-SERVICE
-
-  datasource:
-    url: jdbc:mysql://mysql:3306/his_project
-    username: root
-    password: Ramcharan8@
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery-server:8761/eureka
+    name: correspondence-service
+  config:
+    import: optional:configserver:http://config-server:8888

@@ -17,7 +17,7 @@ public class PdfGenerator {
             String denialReason
     ) {
 
-        String path = "C:/HIS_NOTICES/notice_" +
+        String path = "/HIS_NOTICES/" +
                 caseId + ".pdf";
 
         try {
