@@ -2,6 +2,10 @@ version: '3.8'
 
 services:
 
+  # ─────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────────
+
   mysql:
     image: mysql:8
     container_name: mysql
@@ -28,6 +32,85 @@ services:
     networks:
       - his-network
 
+  # ─────────────────────────────────────────────
+  # ELK STACK
+  # ─────────────────────────────────────────────
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - his-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.0
+    container_name: logstash
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+    networks:
+      - his-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q 'available'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - his-network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.13.0
+    container_name: filebeat
+    user: root
+    command: filebeat -e --strict.perms=false
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - his-logs:/var/log/his:ro
+    depends_on:
+      - logstash
+    networks:
+      - his-network
+    
+
+    # ─────────────────────────────────────────────
+  # SPRING CLOUD INFRASTRUCTURE
+  # ─────────────────────────────────────────────
+
   discovery-server:
     build: ./discoveryserver
     container_name: discovery-server
@@ -43,6 +126,8 @@ services:
       timeout: 10s
       retries: 5
       start_period: 20s
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -61,8 +146,14 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
+
+  # ─────────────────────────────────────────────
+  # HIS MICROSERVICES
+  # ─────────────────────────────────────────────
 
   api-gateway:
     build: ./apigateway
@@ -80,6 +171,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/api-gateway/application.log
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -99,6 +193,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/auth-service/application.log
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -118,6 +215,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/application-registration/application.log
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -137,6 +237,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/data-collection/application.log
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -156,6 +259,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/eligibility-determination/application.log
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -175,6 +281,9 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/benefit-issuance/application.log
+    volumes:
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -194,8 +303,10 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - LOGGING_FILE_NAME=/var/log/his/correspondence/application.log
     volumes:
       - C:/HIS_NOTICES:/HIS_NOTICES
+      - his-logs:/var/log/his
     networks:
       - his-network
 
@@ -205,3 +316,5 @@ networks:
 
 volumes:
   mysql-data:
+  elasticsearch-data:
+  his-logs:

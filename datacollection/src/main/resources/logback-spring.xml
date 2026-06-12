@@ -1,0 +1,85 @@
+<!--
+  Place this file at: src/main/resources/logback-spring.xml
+  Apply to ALL HIS microservices (auth-service, api-gateway,
+  application-registration, data-collection, eligibility-determination,
+  benefit-issuance, correspondence)
+-->
+<configuration>
+
+    <!-- Register Spring Boot's custom converters -->
+    <conversionRule conversionWord="clr"
+                    converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+
+    <!-- Read service name from Spring application name -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="his-service"/>
+    <springProperty scope="context" name="LOG_FILE" source="logging.file.name" defaultValue="/var/log/his/${APP_NAME}/application.log"/>
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- Console appender — human-readable for local dev -->
+    <!-- ─────────────────────────────────────────── -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- JSON File appender — structured logs for ELK -->
+    <!-- ─────────────────────────────────────────── -->
+    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Roll over daily, keep 7 days -->
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Add service name to every log entry -->
+            <customFields>{"service":"${APP_NAME}"}</customFields>
+            <!-- Include MDC fields (traceId, spanId come from Micrometer Tracing) -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <!-- Include caller info for easier debugging -->
+            <includeCallerData>false</includeCallerData>
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- Profile-based activation                    -->
+    <!-- ─────────────────────────────────────────── -->
+
+    <!-- Local dev: only console -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.hi" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Docker/prod: console + JSON file for Filebeat -->
+    <springProfile name="docker">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE_JSON"/>
+        </root>
+        <logger name="com.hi" level="INFO"/>
+        <!-- Reduce noise from framework libs -->
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.hibernate" level="WARN"/>
+        <logger name="com.netflix.eureka" level="WARN"/>
+        <logger name="com.netflix.discovery" level="WARN"/>
+    </springProfile>
+
+</configuration>

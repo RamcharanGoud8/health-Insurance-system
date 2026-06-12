@@ -11,7 +11,7 @@
         <module name="configserver" />
         <module name="Authservice" />
       </profile>
-      <profile name="Annotation profile for correspondance" enabled="true">
+      <profile name="Annotation profile for eligibilitydetermination" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -21,8 +21,8 @@
         <module name="eligibilitydetermination" />
         <module name="benifitIssuance" />
         <module name="applicationregistration" />
-        <module name="correspondance" />
         <module name="datacollection" />
+        <module name="correspondance" />
       </profile>
     </annotationProcessing>
   </component>
